@@ -1,14 +1,21 @@
-"use client";
-
-import { useActionState } from "react";
 import Link from "next/link";
-import { signIn, enterDemoAccount } from "@/lib/auth";
+import { Sparkles } from "lucide-react";
+import { enterDemoAccount } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Sparkles } from "lucide-react";
+import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 
-export default function LoginPage() {
-  const [state, formAction, pending] = useActionState(signIn, undefined);
+const errorMessages: Record<string, string> = {
+  missing_code: "Something went wrong starting that sign-in. Please try again.",
+  auth_failed: "We couldn't complete that sign-in with Google. Please try again.",
+};
+
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const { error } = await searchParams;
 
   return (
     <div className="animate-rise">
@@ -16,42 +23,13 @@ export default function LoginPage() {
       <p className="mt-1.5 text-[15px] text-ink-500">Sign in to see how your reputation is growing.</p>
 
       <Card className="mt-6 p-6">
-        <form action={formAction} className="space-y-4">
-          <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-ink-700">
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              placeholder="you@business.com"
-              className="w-full rounded-lg border border-sand-300 bg-white px-3.5 py-2.5 text-[15px] text-ink-900 placeholder:text-ink-400 focus:border-evergreen-500 focus:outline-none focus:ring-2 focus:ring-evergreen-100"
-            />
-          </div>
-          <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-ink-700">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              placeholder="••••••••"
-              className="w-full rounded-lg border border-sand-300 bg-white px-3.5 py-2.5 text-[15px] text-ink-900 placeholder:text-ink-400 focus:border-evergreen-500 focus:outline-none focus:ring-2 focus:ring-evergreen-100"
-            />
-          </div>
-          {state?.error && (
-            <p role="alert" className="text-sm font-medium text-error-600">
-              {state.error}
-            </p>
-          )}
-          <Button type="submit" className="w-full" disabled={pending}>
-            {pending ? "Signing in…" : "Sign in"}
-          </Button>
-        </form>
+        {error && (
+          <p role="alert" className="mb-4 text-sm font-medium text-error-600">
+            {errorMessages[error] ?? "Something went wrong. Please try again."}
+          </p>
+        )}
+
+        <GoogleSignInButton label="Sign in with Google" />
 
         <div className="my-5 flex items-center gap-3">
           <div className="h-px flex-1 bg-sand-200" />

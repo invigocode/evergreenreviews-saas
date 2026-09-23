@@ -1,24 +1,40 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
 
-export function proxy(request: NextRequest) {
-  const session = request.cookies.get("er_session")?.value;
-  const onboarded = request.cookies.get("er_onboarded")?.value === "1";
+const DEMO_SESSION_COOKIE = "er_demo_session";
+const DEMO_EMAIL = "demo@oakandstoneservices.com";
+
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isDemo = request.cookies.get(DEMO_SESSION_COOKIE)?.value === DEMO_EMAIL;
 
-  if (pathname.startsWith("/dashboard")) {
-    if (!session) {
+  if (isDemo) {
+    return NextResponse.next();
+  }
+
+  const { response, user, supabase } = await updateSession(request);
+
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding")) {
+    if (!user || !supabase) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    if (!onboarded) {
+
+    const { data: membership } = await supabase
+      .from("business_members")
+      .select("business_id")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
+
+    if (pathname.startsWith("/dashboard") && !membership) {
       return NextResponse.redirect(new URL("/onboarding", request.url));
+    }
+    if (pathname.startsWith("/onboarding") && membership) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
     }
   }
 
-  if (pathname.startsWith("/onboarding") && !session) {
-    return NextResponse.redirect(new URL("/signup", request.url));
-  }
-
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

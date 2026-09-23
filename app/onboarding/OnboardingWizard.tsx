@@ -36,23 +36,57 @@ const GOALS = [
   "Improve Google Business Profile performance",
 ];
 
+type BusinessDetails = {
+  businessName: string;
+  category: string;
+  website: string;
+  location: string;
+  employeeCount: string;
+};
+
+const initialDetails: BusinessDetails = {
+  businessName: "",
+  category: "Home & Property Maintenance",
+  website: "",
+  location: "",
+  employeeCount: "Just me",
+};
+
 export function OnboardingWizard() {
   const [step, setStep] = useState(0);
   const [connecting, setConnecting] = useState(false);
   const [connected, setConnected] = useState(false);
   const [goals, setGoals] = useState<string[]>([GOALS[0], GOALS[2]]);
+  const [details, setDetails] = useState<BusinessDetails>(initialDetails);
+  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
   const next = () => setStep((s) => Math.min(s + 1, STEPS.length - 1));
   const back = () => setStep((s) => Math.max(s - 1, 0));
 
+  const updateDetail = (key: keyof BusinessDetails, value: string) =>
+    setDetails((prev) => ({ ...prev, [key]: value }));
+
   const toggleGoal = (goal: string) =>
     setGoals((prev) => (prev.includes(goal) ? prev.filter((g) => g !== goal) : [...prev, goal]));
 
   const finish = (destination: "campaign" | "dashboard") => {
+    setError(null);
     startTransition(async () => {
-      await completeOnboarding();
+      const formData = new FormData();
+      formData.set("businessName", details.businessName);
+      formData.set("category", details.category);
+      formData.set("website", details.website);
+      formData.set("address", details.location);
+      formData.set("employeeCount", details.employeeCount);
+
+      const result = await completeOnboarding(undefined, formData);
+      if (result?.error) {
+        setError(result.error);
+        setStep(1);
+        return;
+      }
       if (destination === "campaign") router.push("/dashboard/campaigns/new");
     });
   };
@@ -92,11 +126,25 @@ export function OnboardingWizard() {
         <Card className="p-6 sm:p-8">
           <h2 className="text-xl font-semibold text-ink-900">Tell us about your business</h2>
           <p className="mt-1 text-sm text-ink-500">This helps us tailor templates and defaults for you.</p>
+          {error && (
+            <p role="alert" className="mt-3 text-sm font-medium text-error-600">
+              {error}
+            </p>
+          )}
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <Field label="Business name" defaultValue="Oak & Stone Property Services" />
+            <Field
+              label="Business name"
+              placeholder="e.g. Riverside Roofing Co."
+              value={details.businessName}
+              onChange={(v) => updateDetail("businessName", v)}
+            />
             <div>
               <label className="mb-1.5 block text-sm font-medium text-ink-700">Business category</label>
-              <select className={inputClass} defaultValue="Home & Property Maintenance">
+              <select
+                className={inputClass}
+                value={details.category}
+                onChange={(e) => updateDetail("category", e.target.value)}
+              >
                 <option>Home & Property Maintenance</option>
                 <option>Roofing</option>
                 <option>Plumbing</option>
@@ -109,12 +157,25 @@ export function OnboardingWizard() {
                 <option>Other service business</option>
               </select>
             </div>
-            <Field label="Website" defaultValue="oakandstoneservices.com" />
-            <Field label="Business location" defaultValue="Portland, OR" />
-            <Field label="Contact email" defaultValue="team@oakandstoneservices.com" />
+            <Field
+              label="Website"
+              placeholder="yourbusiness.com"
+              value={details.website}
+              onChange={(v) => updateDetail("website", v)}
+            />
+            <Field
+              label="Business location"
+              placeholder="City, State"
+              value={details.location}
+              onChange={(v) => updateDetail("location", v)}
+            />
             <div>
               <label className="mb-1.5 block text-sm font-medium text-ink-700">Team size</label>
-              <select className={inputClass} defaultValue="12–20 employees">
+              <select
+                className={inputClass}
+                value={details.employeeCount}
+                onChange={(e) => updateDetail("employeeCount", e.target.value)}
+              >
                 <option>Just me</option>
                 <option>2–5 employees</option>
                 <option>6–11 employees</option>
@@ -123,18 +184,7 @@ export function OnboardingWizard() {
               </select>
             </div>
           </div>
-          <div className="mt-6">
-            <label className="mb-1.5 block text-sm font-medium text-ink-700">Business logo</label>
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-evergreen-100 text-lg font-bold text-evergreen-700">
-                O&S
-              </div>
-              <Button variant="secondary" size="sm" type="button">
-                Upload logo
-              </Button>
-            </div>
-          </div>
-          <StepNav onBack={back} onNext={next} />
+          <StepNav onBack={back} onNext={next} nextDisabled={!details.businessName.trim()} />
         </Card>
       )}
 
@@ -149,8 +199,8 @@ export function OnboardingWizard() {
             <div className="mt-6 rounded-xl border border-dashed border-sand-300 bg-sand-50 p-6 text-center">
               <ShieldCheck className="mx-auto mb-3 text-evergreen-600" size={28} />
               <p className="text-sm text-ink-600">
-                This is a demo environment, so no real Google account will be connected. In production this
-                step uses Google&apos;s official OAuth flow.
+                Live Google Business Profile syncing isn&apos;t connected yet for your account, so this step is
+                a preview of how it will work once it&apos;s available.
               </p>
               <Button
                 className="mt-4"
@@ -169,7 +219,7 @@ export function OnboardingWizard() {
                     <Loader2 size={16} className="animate-spin" /> Connecting…
                   </>
                 ) : (
-                  "Connect with Google (demo)"
+                  "Preview the Google connection"
                 )}
               </Button>
             </div>
@@ -177,10 +227,10 @@ export function OnboardingWizard() {
             <div className="mt-6 flex items-start gap-3 rounded-xl border border-evergreen-200 bg-evergreen-50 p-5">
               <CheckCircle2 className="mt-0.5 shrink-0 text-evergreen-600" size={22} />
               <div>
-                <p className="text-sm font-semibold text-evergreen-800">Demo connection simulated</p>
+                <p className="text-sm font-semibold text-evergreen-800">This is a preview, not a live connection</p>
                 <p className="mt-1 text-sm text-evergreen-700">
-                  Oak & Stone Property Services — 247 reviews · 4.8 average rating. This is sample data, not a
-                  live Google connection.
+                  When Google Business Profile syncing is enabled for your account, your real review count and
+                  rating will appear here automatically.
                 </p>
               </div>
             </div>
@@ -194,12 +244,12 @@ export function OnboardingWizard() {
         <Card className="p-6 sm:p-8">
           <h2 className="text-xl font-semibold text-ink-900">Your current reputation</h2>
           <p className="mt-1 text-sm text-ink-500">
-            We pulled this from your demo connection — adjust anything that isn&apos;t right.
+            A few details to help us set a baseline — you can refine these later.
           </p>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <Field label="Current Google review count" defaultValue="247" />
-            <Field label="Current average rating" defaultValue="4.8" />
-            <Field label="Google Business Profile URL" defaultValue="https://g.page/r/oak-and-stone-demo" className="sm:col-span-2" />
+            <Field label="Current Google review count" placeholder="e.g. 42" />
+            <Field label="Current average rating" placeholder="e.g. 4.6" />
+            <Field label="Google Business Profile URL" placeholder="https://g.page/r/…" className="sm:col-span-2" />
             <div>
               <label className="mb-1.5 block text-sm font-medium text-ink-700">Current review-request method</label>
               <select className={inputClass} defaultValue="Ask in person, occasionally">
@@ -212,7 +262,7 @@ export function OnboardingWizard() {
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-ink-700">Customers served monthly</label>
-              <select className={inputClass} defaultValue="50–100">
+              <select className={inputClass} defaultValue="20–50">
                 <option>Under 20</option>
                 <option>20–50</option>
                 <option>50–100</option>
@@ -281,6 +331,12 @@ export function OnboardingWizard() {
             <span className="ml-2 text-sm font-medium text-ink-600">Small, consistent actions build lasting trust.</span>
           </div>
 
+          {error && (
+            <p role="alert" className="mt-4 text-sm font-medium text-error-600">
+              {error}
+            </p>
+          )}
+
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
             <Button size="lg" onClick={() => finish("campaign")} disabled={pending}>
               {pending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
@@ -301,17 +357,29 @@ const inputClass =
 
 function Field({
   label,
+  value,
   defaultValue,
+  placeholder,
+  onChange,
   className,
 }: {
   label: string;
+  value?: string;
   defaultValue?: string;
+  placeholder?: string;
+  onChange?: (value: string) => void;
   className?: string;
 }) {
   return (
     <div className={className}>
       <label className="mb-1.5 block text-sm font-medium text-ink-700">{label}</label>
-      <input defaultValue={defaultValue} className={inputClass} />
+      <input
+        value={value}
+        defaultValue={defaultValue}
+        placeholder={placeholder}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+        className={inputClass}
+      />
     </div>
   );
 }
