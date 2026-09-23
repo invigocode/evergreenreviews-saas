@@ -1,0 +1,111 @@
+@import "tailwindcss";
+
+@theme {
+  /* Evergreen brand ramp */
+  --color-evergreen-50: #f1f8f3;
+  --color-evergreen-100: #dcefe3;
+  --color-evergreen-200: #b7dfc7;
+  --color-evergreen-300: #8bc9a4;
+  --color-evergreen-400: #59a978;
+  --color-evergreen-500: #35835a;
+  --color-evergreen-600: #226844;
+  --color-evergreen-700: #1a4f34;
+  --color-evergreen-800: #163f2a;
+  --color-evergreen-900: #0f2c1e;
+  --color-evergreen-950: #081b13;
+
+  /* Warm neutrals (backgrounds, borders, text) */
+  --color-sand-50: #fbfaf6;
+  --color-sand-100: #f5f3ec;
+  --color-sand-200: #e9e5d8;
+  --color-sand-300: #d9d3c0;
+  --color-sand-400: #b6ae97;
+  --color-sand-500: #8f8770;
+
+  --color-ink-900: #1c2320;
+  --color-ink-800: #262f2a;
+  --color-ink-700: #384139;
+  --color-ink-600: #566058;
+  --color-ink-500: #707a70;
+  --color-ink-400: #8c9490;
+
+  /* Accent: warm gold for milestones / premium highlights */
+  --color-gold-100: #f6ecd6;
+  --color-gold-300: #e0c483;
+  --color-gold-500: #b08a3e;
+  --color-gold-600: #8f6f2f;
+
+  /* Semantic */
+  --color-success-50: #f1f8f3;
+  --color-success-600: #226844;
+  --color-warning-50: #fdf3e7;
+  --color-warning-600: #a35b13;
+  --color-error-50: #fbecea;
+  --color-error-600: #ab2a20;
+
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-card: 0 1px 2px rgba(28, 35, 32, 0.04), 0 1px 1px rgba(28, 35, 32, 0.03);
+  --shadow-card-hover: 0 4px 16px rgba(28, 35, 32, 0.07), 0 1px 2px rgba(28, 35, 32, 0.04);
+  --shadow-popover: 0 12px 32px rgba(15, 22, 18, 0.14), 0 2px 8px rgba(15, 22, 18, 0.08);
+
+  --animate-fade-in: fade-in 0.25s ease-out;
+  --animate-rise: rise 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+:root {
+  --background: var(--color-sand-50);
+  --foreground: var(--color-ink-900);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv11", "ss01";
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+::selection {
+  background: var(--color-evergreen-200);
+  color: var(--color-evergreen-900);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-evergreen-600);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Thin, quiet scrollbars for scroll containers */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-sand-300) transparent;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-review-card,
+  #printable-review-card * {
+    visibility: visible;
+  }
+  #printable-review-card {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    height: max-content;
+  }
+}
