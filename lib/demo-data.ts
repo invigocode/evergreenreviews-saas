@@ -6,6 +6,7 @@ import type {
   DailyMetric,
   Review,
   ReviewRequest,
+  ScheduledOutreach,
 } from "@/lib/types";
 
 // Deterministic pseudo-random generator so demo numbers are stable across renders.
@@ -27,6 +28,13 @@ function daysAgo(n: number) {
   return d.toISOString();
 }
 
+function hoursFromNow(n: number) {
+  const d = new Date();
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() + n);
+  return d.toISOString();
+}
+
 export const business: Business = {
   name: "Oak & Stone Property Services",
   category: "Home & Property Maintenance",
@@ -37,6 +45,7 @@ export const business: Business = {
   googleReviewUrl: "https://g.page/r/oak-and-stone-demo/review",
   googlePlaceConnected: true,
   timezone: "America/Los_Angeles",
+  reviewRequestCap: 3,
 };
 
 export const DEMO_MODE = true;
@@ -326,11 +335,20 @@ function seededName(i: number) {
 }
 
 export const customers: Customer[] = Array.from({ length: 42 }).map((_, i) => {
+  const cap = business.reviewRequestCap;
   const serviceDaysAgo = 2 + Math.floor(rand() * 70);
   const hasRequest = rand() > 0.15;
   const requestDaysAgo = hasRequest ? Math.max(serviceDaysAgo - 1 - Math.floor(rand() * 2), 0) : undefined;
   const completed = hasRequest && rand() > 0.55;
+  const requestsSent = hasRequest ? Math.min(1 + Math.floor(rand() * cap), cap) : 0;
   const name = seededName(i);
+
+  let requestStatus: Customer["requestStatus"];
+  if (!hasRequest) requestStatus = "not_sent";
+  else if (completed) requestStatus = "completed";
+  else if (requestsSent >= cap) requestStatus = "capped";
+  else requestStatus = "pending";
+
   return {
     id: `cust_${i + 1}`,
     name,
@@ -340,7 +358,8 @@ export const customers: Customer[] = Array.from({ length: 42 }).map((_, i) => {
     serviceDate: daysAgo(serviceDaysAgo),
     lastRequestDate: requestDaysAgo !== undefined ? daysAgo(requestDaysAgo) : undefined,
     campaignName: hasRequest ? ["Post-Service Follow-up", "Seasonal Roof Check-in", "Landscaping Refresh"][i % 3] : undefined,
-    requestStatus: !hasRequest ? "not_sent" : completed ? "completed" : rand() > 0.5 ? "sent" : "no_response",
+    requestStatus,
+    requestsSent,
     consent: rand() > 0.06,
   };
 });
@@ -453,6 +472,45 @@ export const reviewRequests: ReviewRequest[] = Array.from({ length: 58 }).map((_
     campaignName: campaign.name,
     clicked: outcome.clicked,
     completed: outcome.completed,
+  };
+});
+
+// ---------------------------------------------------------------------------
+// Scheduled outreach — auto-drafted requests queued to send automatically,
+// with an edit window (edit, send now, or cancel) before they go out.
+// ---------------------------------------------------------------------------
+
+function draftOutreachMessage(customerName: string, service: string, attempt: number) {
+  const firstName = customerName.split(" ")[0];
+  if (attempt === 1) {
+    return `Hi ${firstName},\n\nThank you again for choosing ${business.name}. We hope you're happy with the ${service.toLowerCase()} we completed for you.\n\nIf you have a moment, we'd really appreciate hearing about your experience:\n${business.googleReviewUrl}\n\nThank you for your support.\n${business.name}`;
+  }
+  return `Hi ${firstName},\n\nJust a gentle follow-up — no pressure at all. If you ever have a spare minute, we'd still love to hear how the ${service.toLowerCase()} worked out for you:\n${business.googleReviewUrl}\n\nThanks again,\n${business.name}`;
+}
+
+const outreachQueueCustomers = customers.filter(
+  (c) => c.consent && (c.requestStatus === "not_sent" || c.requestStatus === "pending")
+);
+
+export const scheduledOutreach: ScheduledOutreach[] = [3, 6, 18, 30, 52].map((hoursOut, i) => {
+  const customer = outreachQueueCustomers[i % outreachQueueCustomers.length];
+  const campaign = campaigns[i % 3];
+  const attempt = customer.requestsSent + 1;
+  const methodMap: ScheduledOutreach["channel"][] = ["sms", "email", "sms"];
+  return {
+    id: `queue_${i + 1}`,
+    customerId: customer.id,
+    customerName: customer.name,
+    service: customer.service,
+    channel: methodMap[i % methodMap.length],
+    message: draftOutreachMessage(customer.name, customer.service, attempt),
+    campaignId: campaign.id,
+    campaignName: campaign.name,
+    requestNumber: attempt,
+    scheduledFor: hoursFromNow(hoursOut),
+    createdAt: daysAgo(0),
+    status: "scheduled",
+    edited: false,
   };
 });
 

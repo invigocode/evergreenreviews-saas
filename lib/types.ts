@@ -8,6 +8,8 @@ export type Business = {
   googleReviewUrl: string;
   googlePlaceConnected: boolean;
   timezone: string;
+  /** Maximum times a single customer will ever be asked for a review, spaced automatically. Never re-asked once they leave one. */
+  reviewRequestCap: number;
 };
 
 export type ReviewSentiment = "positive" | "neutral" | "negative";
@@ -70,7 +72,7 @@ export type Campaign = {
   completions: number;
 };
 
-export type CustomerRequestStatus = "not_sent" | "sent" | "completed" | "no_response";
+export type CustomerRequestStatus = "not_sent" | "pending" | "completed" | "capped";
 
 export type Customer = {
   id: string;
@@ -82,7 +84,33 @@ export type Customer = {
   lastRequestDate?: string;
   campaignName?: string;
   requestStatus: CustomerRequestStatus;
+  /** How many review requests have actually gone out to this customer so far. */
+  requestsSent: number;
   consent: boolean;
+};
+
+export type OutreachStatus = "scheduled" | "sent" | "cancelled";
+
+/**
+ * A review request the system has drafted and queued to send automatically.
+ * It sends itself once `scheduledFor` passes, unless edited (which just
+ * updates the draft) or cancelled first — the "edit window" the product
+ * gives an owner to add context the software doesn't have.
+ */
+export type ScheduledOutreach = {
+  id: string;
+  customerId: string;
+  customerName: string;
+  service?: string;
+  channel: RequestMethod;
+  message: string;
+  campaignId?: string;
+  campaignName?: string;
+  requestNumber: number;
+  scheduledFor: string;
+  createdAt: string;
+  status: OutreachStatus;
+  edited: boolean;
 };
 
 export type DailyMetric = {

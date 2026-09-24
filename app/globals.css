@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  /* Evergreen brand ramp */
-  --color-evergreen-50: #f1f8f3;
-  --color-evergreen-100: #dcefe3;
-  --color-evergreen-200: #b7dfc7;
-  --color-evergreen-300: #8bc9a4;
-  --color-evergreen-400: #59a978;
-  --color-evergreen-500: #35835a;
-  --color-evergreen-600: #226844;
-  --color-evergreen-700: #1a4f34;
-  --color-evergreen-800: #163f2a;
-  --color-evergreen-900: #0f2c1e;
-  --color-evergreen-950: #081b13;
+  /* Evergreen brand ramp — anchored on the logo's exact green (#18bb37 = evergreen-500) */
+  --color-evergreen-50: #effaf1;
+  --color-evergreen-100: #daf6e0;
+  --color-evergreen-200: #b5eec0;
+  --color-evergreen-300: #81e494;
+  --color-evergreen-400: #3cdd5b;
+  --color-evergreen-500: #18bb37;
+  --color-evergreen-600: #169a2f;
+  --color-evergreen-700: #147b28;
+  --color-evergreen-800: #115f20;
+  --color-evergreen-900: #104219;
+  --color-evergreen-950: #0b2810;
 
   /* Warm neutrals (backgrounds, borders, text) */
   --color-sand-50: #fbfaf6;
@@ -36,8 +36,8 @@
   --color-gold-600: #8f6f2f;
 
   /* Semantic */
-  --color-success-50: #f1f8f3;
-  --color-success-600: #226844;
+  --color-success-50: #effaf1;
+  --color-success-600: #147b28;
   --color-warning-50: #fdf3e7;
   --color-warning-600: #a35b13;
   --color-error-50: #fbecea;

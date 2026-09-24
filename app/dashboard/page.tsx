@@ -7,6 +7,7 @@ import {
   BarChart3,
   History,
   Building2,
+  Users,
   ArrowUpRight,
   Award,
   Star,
@@ -18,16 +19,15 @@ import { StarRating } from "@/components/ui/StarRating";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { GoogleIcon } from "@/components/GoogleIcon";
-import { RatingRing } from "@/components/dashboard/RatingRing";
 import { MiniSparkline } from "@/components/dashboard/MiniSparkline";
 import {
   business,
   reviews,
+  customers,
   gbpChecklist,
   getMomentum,
   getNextMilestone,
   dailySeries,
-  TOTAL_GOOGLE_REVIEWS,
   AVERAGE_RATING,
 } from "@/lib/demo-data";
 import { currentPeriodSeries, previousPeriodSeries } from "@/lib/metrics";
@@ -64,6 +64,13 @@ export default function OverviewPage() {
   const gbpDone = gbpChecklist.filter((i) => i.done).length;
   const gbpPct = Math.round((gbpDone / gbpChecklist.length) * 100);
 
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentCustomers = customers.filter((c) => new Date(c.serviceDate) >= thirtyDaysAgo);
+  const reviewedCount = recentCustomers.filter((c) => c.requestStatus === "completed").length;
+  const notReviewedCount = recentCustomers.length - reviewedCount;
+  const reviewedPct = recentCustomers.length ? Math.round((reviewedCount / recentCustomers.length) * 100) : 0;
+
   const quickActions = [
     { icon: Send, label: "Send Review Requests", subtitle: "Reach your recent customers", href: "/dashboard/review-requests", tone: "bg-blue-50 text-blue-600" },
     { icon: Building2, label: "Optimise Google Profile", subtitle: "Improve your visibility", href: "/dashboard/business-profile", tone: "bg-violet-50 text-violet-600" },
@@ -86,72 +93,86 @@ export default function OverviewPage() {
         <p className="mt-1 text-[15px] text-ink-500">{momentum.headline}</p>
       </div>
 
-      {/* Hero: the one number that matters, a clear next action, everything else behind a link */}
-      <Card className="overflow-hidden p-0">
-        <div className="grid grid-cols-1 gap-6 p-6 sm:grid-cols-[1fr_auto]">
-          <div>
-            <p className="flex items-center gap-1.5 text-sm font-medium text-ink-500">
-              <GoogleIcon size={15} /> Google Reviews
-            </p>
+      {/* Two things a business owner actually needs first: new reviews, and how the customers behind them are doing */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Card className="p-5">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-ink-500">
+            <GoogleIcon size={14} /> Google Reviews
+          </p>
 
-            {hasHistory ? (
-              <>
-                <div className="mt-2 flex items-end gap-3">
-                  <span className="text-5xl font-semibold tracking-tight text-evergreen-700 tabular-nums">
-                    +{newReviews}
-                  </span>
-                  <span className="mb-1.5 text-[15px] text-ink-500">new reviews</span>
-                </div>
-                <div className="mt-1.5 flex items-center gap-2">
-                  <span className="text-sm text-ink-500">in the last 30 days</span>
-                  {growthPct !== null && (
-                    <Badge tone="green">
-                      <ArrowUpRight size={12} /> {growthPct >= 0 ? "+" : ""}
-                      {growthPct}% vs previous 30 days
-                    </Badge>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="mt-3 text-lg font-medium text-ink-700">Your growth story starts here.</p>
-            )}
-
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <ButtonLink href="/dashboard/review-requests" variant="cta" size="lg">
-                <Send size={16} /> Send Review Requests
-              </ButtonLink>
-              <ButtonLink href="/dashboard/analytics" variant="ghost">
-                See full breakdown <ChevronRight size={15} />
-              </ButtonLink>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-center sm:justify-end">
-            <RatingRing rating={AVERAGE_RATING} reviewCount={TOTAL_GOOGLE_REVIEWS} />
-          </div>
-        </div>
-
-        <div className="border-t border-sand-200 bg-evergreen-50/60 px-6 py-4">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 text-sm font-medium text-evergreen-800">
-              <Award size={15} className="text-gold-500" />
-              {nextMilestone ? `Next milestone: ${nextMilestone} reviews` : "All milestones reached"}
-            </p>
-            {nextMilestone && (
-              <span className="text-xs font-medium text-evergreen-700">
-                {total}/{nextMilestone}
-              </span>
-            )}
-          </div>
-          {nextMilestone && (
+          {hasHistory ? (
             <>
-              <ProgressBar value={milestoneProgress} max={milestoneSpan} className="mt-2.5" />
-              <p className="mt-2 text-xs text-evergreen-700">
-                You&apos;re {milestonePct}% there — keep the momentum going!
+              <p className="mt-2 flex items-baseline gap-1.5">
+                <span className="text-4xl font-bold tracking-tight text-evergreen-500 tabular-nums">+{newReviews}</span>
+                <span className="text-lg font-medium text-ink-700">reviews</span>
               </p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="text-sm text-ink-500">last 30 days</span>
+                {growthPct !== null && (
+                  <Badge tone="green">
+                    <ArrowUpRight size={12} /> {growthPct >= 0 ? "+" : ""}
+                    {growthPct}%
+                  </Badge>
+                )}
+              </div>
             </>
+          ) : (
+            <p className="mt-2 text-lg font-medium text-ink-700">Your growth story starts here.</p>
+          )}
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <ButtonLink href="/dashboard/review-requests" variant="cta">
+              <Send size={15} /> Send Review Requests
+            </ButtonLink>
+            <ButtonLink href="/dashboard/analytics" variant="ghost" size="sm">
+              See full breakdown <ChevronRight size={14} />
+            </ButtonLink>
+          </div>
+        </Card>
+
+        <Card className="p-5">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-ink-500">
+            <Users size={14} /> New Customers
+          </p>
+          <p className="mt-2 text-4xl font-bold tracking-tight text-ink-900 tabular-nums">+{recentCustomers.length}</p>
+          <p className="mt-1 text-sm text-ink-500">served in the last 30 days</p>
+
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-sand-200">
+            <div className="h-full bg-evergreen-500" style={{ width: `${reviewedPct}%` }} />
+          </div>
+          <div className="mt-2 flex items-center justify-between text-xs">
+            <span className="font-medium text-evergreen-700">{reviewedCount} left a review</span>
+            <span className="text-ink-400">{notReviewedCount} haven&apos;t yet</span>
+          </div>
+
+          <Link
+            href="/dashboard/customers"
+            className="mt-4 flex items-center gap-1 text-sm font-medium text-evergreen-700 hover:underline"
+          >
+            View customer breakdown <ChevronRight size={14} />
+          </Link>
+        </Card>
+      </div>
+
+      {/* Milestone strip */}
+      <Card className="px-5 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-ink-800">
+            <Award size={15} className="text-gold-500" />
+            {nextMilestone ? `Next milestone: ${nextMilestone} reviews` : "All milestones reached"}
+          </p>
+          {nextMilestone && (
+            <span className="text-xs font-medium text-ink-500">
+              {total}/{nextMilestone}
+            </span>
           )}
         </div>
+        {nextMilestone && (
+          <>
+            <ProgressBar value={milestoneProgress} max={milestoneSpan} className="mt-2.5" />
+            <p className="mt-2 text-xs text-ink-500">You&apos;re {milestonePct}% there — keep the momentum going!</p>
+          </>
+        )}
       </Card>
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">

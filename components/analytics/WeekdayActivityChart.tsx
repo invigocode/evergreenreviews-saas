@@ -15,7 +15,7 @@ export function WeekdayActivityChart({ data }: { data: { label: string; requests
         />
         <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12, color: "#566058" }} />
         <Bar dataKey="requestsSent" name="Requests sent" fill="#b08a3e" radius={[3, 3, 0, 0]} barSize={14} />
-        <Bar dataKey="newReviews" name="Reviews received" fill="#1a4f34" radius={[3, 3, 0, 0]} barSize={14} />
+        <Bar dataKey="newReviews" name="Reviews received" fill="#147b28" radius={[3, 3, 0, 0]} barSize={14} />
       </BarChart>
     </ResponsiveContainer>
   );
