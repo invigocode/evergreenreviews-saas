@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Plus, Search, Send, Mail, MessageCircle, QrCode, Link2, User, Lock } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Plus, Search, Send, Mail, MessageCircle, QrCode, Link2, User, Lock, Pencil, X, Zap, Clock } from "lucide-react";
+import { Card, CardTitle, CardDescription } from "@/components/ui/Card";
 import { MetricCard } from "@/components/ui/MetricCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -11,8 +11,16 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { cn, formatDate } from "@/lib/utils";
 import { requestStatusConfig, methodLabels } from "@/lib/status";
-import type { Customer, ReviewRequest, RequestMethod } from "@/lib/types";
+import type { Customer, ReviewRequest, RequestMethod, ScheduledOutreach } from "@/lib/types";
 import { business } from "@/lib/demo-data";
+
+function formatScheduled(iso: string) {
+  const diffMs = new Date(iso).getTime() - Date.now();
+  const diffHrs = Math.round(diffMs / 3_600_000);
+  if (diffHrs <= 0) return "Sending shortly";
+  if (diffHrs < 24) return `Sends in ${diffHrs}h`;
+  return `Sends in ${Math.round(diffHrs / 24)}d`;
+}
 
 const channelOptions: { id: RequestMethod; label: string; icon: typeof Send; available: boolean }[] = [
   { id: "sms", label: "SMS", icon: Send, available: true },
@@ -26,19 +34,65 @@ const channelOptions: { id: RequestMethod; label: string; icon: typeof Send; ava
 export function RequestsClient({
   requests: initialRequests,
   customers,
+  outreach: initialOutreach,
+  cap,
 }: {
   requests: ReviewRequest[];
   customers: Customer[];
+  outreach: ScheduledOutreach[];
+  cap: number;
 }) {
   const [requests, setRequests] = useState(initialRequests);
+  const [queue, setQueue] = useState(initialOutreach);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const dialogRef = useRef<DialogHandle>(null);
+  const editDialogRef = useRef<DialogHandle>(null);
   const { show } = useToast();
 
   const [selectedCustomer, setSelectedCustomer] = useState(customers[0]?.id ?? "");
   const [channel, setChannel] = useState<RequestMethod>("sms");
   const [message, setMessage] = useState(defaultMessage(customers[0]?.name ?? "Customer"));
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftText, setDraftText] = useState("");
+
+  const openEdit = (item: ScheduledOutreach) => {
+    setEditingId(item.id);
+    setDraftText(item.message);
+    editDialogRef.current?.show();
+  };
+
+  const saveEdit = () => {
+    setQueue((prev) => prev.map((q) => (q.id === editingId ? { ...q, message: draftText, edited: true } : q)));
+    editDialogRef.current?.close();
+    show("Draft updated.");
+  };
+
+  const cancelOutreach = (item: ScheduledOutreach) => {
+    setQueue((prev) => prev.filter((q) => q.id !== item.id));
+    show(`Cancelled the request to ${item.customerName}.`);
+  };
+
+  const sendOutreachNow = (item: ScheduledOutreach) => {
+    setQueue((prev) => prev.filter((q) => q.id !== item.id));
+    setRequests((prev) => [
+      {
+        id: `req_${Date.now()}`,
+        customerId: item.customerId,
+        customerName: item.customerName,
+        dateRequested: new Date().toISOString(),
+        method: item.channel,
+        status: item.channel === "manual" || item.channel === "qr" ? "sent" : "scheduled",
+        campaignId: item.campaignId,
+        campaignName: item.campaignName,
+        clicked: false,
+        completed: false,
+      },
+      ...prev,
+    ]);
+    show(`Sent to ${item.customerName} now.`);
+  };
 
   const total = requests.length;
   const delivered = requests.filter((r) => ["delivered", "clicked", "completed"].includes(r.status)).length;
@@ -81,6 +135,50 @@ export function RequestsClient({
         <MetricCard label="Clicked" value={clicked.toString()} deltaLabel="Opened the review link" helpText="Clicking the link doesn't guarantee a review was submitted." />
         <MetricCard label="Completed" value={completed.toString()} deltaLabel={`${conversionRate}% conversion`} accent="green" />
       </div>
+
+      {queue.length > 0 && (
+        <Card className="p-5">
+          <div className="flex items-center gap-1.5">
+            <Zap size={15} className="text-gold-500" />
+            <CardTitle>Scheduled Outreach</CardTitle>
+          </div>
+          <CardDescription className="mt-0.5">
+            Auto-drafted from your campaigns. Review, edit, or cancel — anything not touched sends automatically.
+          </CardDescription>
+
+          <div className="mt-3 divide-y divide-sand-100">
+            {queue.map((item) => (
+              <div key={item.id} className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <p className="text-sm font-semibold text-ink-800">{item.customerName}</p>
+                    <Badge tone="outline">{methodLabels[item.channel]}</Badge>
+                    <Badge tone="gold">
+                      Request {item.requestNumber} of {cap}
+                    </Badge>
+                    {item.edited && <Badge tone="neutral">Edited</Badge>}
+                  </div>
+                  <p className="mt-1.5 line-clamp-2 text-sm text-ink-500">{item.message.replace(/\n+/g, " ")}</p>
+                  <p className="mt-1.5 flex items-center gap-1 text-xs text-ink-400">
+                    <Clock size={12} /> {formatScheduled(item.scheduledFor)} · {item.campaignName}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Button size="sm" variant="secondary" onClick={() => openEdit(item)}>
+                    <Pencil size={12} /> Edit
+                  </Button>
+                  <Button size="sm" variant="subtleGreen" onClick={() => sendOutreachNow(item)}>
+                    <Send size={12} /> Send now
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => cancelOutreach(item)}>
+                    <X size={12} /> Cancel
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -222,6 +320,25 @@ export function RequestsClient({
             </Button>
             <Button type="button" onClick={sendRequest}>
               Send request
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      <Dialog ref={editDialogRef} title="Edit scheduled request" description="Add anything you know that the software doesn't.">
+        <div className="flex flex-col gap-4">
+          <textarea
+            value={draftText}
+            onChange={(e) => setDraftText(e.target.value)}
+            rows={8}
+            className="w-full rounded-lg border border-sand-300 bg-white px-3.5 py-2.5 text-sm leading-relaxed focus:border-evergreen-500 focus:outline-none focus:ring-2 focus:ring-evergreen-100"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" type="button" onClick={() => editDialogRef.current?.close()}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={saveEdit}>
+              Save draft
             </Button>
           </div>
         </div>

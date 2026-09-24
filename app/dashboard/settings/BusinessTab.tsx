@@ -37,6 +37,24 @@ export function BusinessTab() {
         </div>
       </Card>
 
+      <Card className="p-5">
+        <CardTitle>Review request limit</CardTitle>
+        <CardDescription className="mt-0.5">
+          How many times we&apos;ll ever ask a single customer for a review before giving up — spaced out automatically,
+          and we always stop the moment they leave one.
+        </CardDescription>
+        <div className="mt-4 max-w-[160px]">
+          <label className="mb-1.5 block text-sm font-medium text-ink-700">Requests per customer</label>
+          <input
+            type="number"
+            min={1}
+            max={10}
+            defaultValue={business.reviewRequestCap}
+            className="w-full rounded-lg border border-sand-300 bg-white px-3.5 py-2.5 text-[15px] focus:border-evergreen-500 focus:outline-none focus:ring-2 focus:ring-evergreen-100"
+          />
+        </div>
+      </Card>
+
       <div className="flex justify-end">
         <Button type="submit">Save changes</Button>
       </div>

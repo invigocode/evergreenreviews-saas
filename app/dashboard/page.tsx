@@ -102,9 +102,12 @@ export default function OverviewPage() {
 
           {hasHistory ? (
             <>
-              <p className="mt-2 text-4xl font-bold tracking-tight text-evergreen-500 tabular-nums">+{newReviews}</p>
+              <p className="mt-2 flex items-baseline gap-1.5">
+                <span className="text-4xl font-bold tracking-tight text-evergreen-500 tabular-nums">+{newReviews}</span>
+                <span className="text-lg font-medium text-ink-700">reviews</span>
+              </p>
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <span className="text-sm text-ink-500">new reviews · last 30 days</span>
+                <span className="text-sm text-ink-500">last 30 days</span>
                 {growthPct !== null && (
                   <Badge tone="green">
                     <ArrowUpRight size={12} /> {growthPct >= 0 ? "+" : ""}

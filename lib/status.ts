@@ -29,7 +29,7 @@ export const campaignStatusConfig: Record<CampaignStatus, { label: string; tone:
 
 export const customerRequestStatusConfig: Record<CustomerRequestStatus, { label: string; tone: "neutral" | "green" | "warning" }> = {
   not_sent: { label: "Not sent", tone: "neutral" },
-  sent: { label: "Sent", tone: "warning" },
+  pending: { label: "Awaiting response", tone: "warning" },
   completed: { label: "Review received", tone: "green" },
-  no_response: { label: "No response yet", tone: "neutral" },
+  capped: { label: "Request limit reached", tone: "neutral" },
 };

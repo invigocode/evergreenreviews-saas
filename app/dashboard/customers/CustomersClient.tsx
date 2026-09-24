@@ -12,7 +12,7 @@ import { formatDate } from "@/lib/utils";
 import { customerRequestStatusConfig } from "@/lib/status";
 import type { Customer } from "@/lib/types";
 
-export function CustomersClient({ customers: initial }: { customers: Customer[] }) {
+export function CustomersClient({ customers: initial, cap }: { customers: Customer[]; cap: number }) {
   const [customers, setCustomers] = useState(initial);
   const [search, setSearch] = useState("");
   const dialogRef = useRef<DialogHandle>(null);
@@ -24,11 +24,27 @@ export function CustomersClient({ customers: initial }: { customers: Customer[] 
   );
 
   const sendRequest = (id: string) => {
-    setCustomers((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, requestStatus: "sent", lastRequestDate: new Date().toISOString() } : c))
-    );
     const customer = customers.find((c) => c.id === id);
-    show(`Review request sent to ${customer?.name}.`);
+    if (!customer) return;
+    const requestsSent = customer.requestsSent + 1;
+
+    setCustomers((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? {
+              ...c,
+              requestsSent,
+              requestStatus: requestsSent >= cap ? "capped" : "pending",
+              lastRequestDate: new Date().toISOString(),
+            }
+          : c
+      )
+    );
+    show(
+      requestsSent === 1
+        ? `Review request sent to ${customer.name}.`
+        : `Follow-up request sent to ${customer.name} (${requestsSent}/${cap}).`
+    );
   };
 
   const addCustomer = (formData: FormData) => {
@@ -42,6 +58,7 @@ export function CustomersClient({ customers: initial }: { customers: Customer[] 
       service: String(formData.get("service") ?? "General service"),
       serviceDate: String(formData.get("serviceDate") ?? new Date().toISOString().slice(0, 10)),
       requestStatus: "not_sent",
+      requestsSent: 0,
       consent: formData.get("consent") === "on",
     };
     setCustomers((prev) => [newCustomer, ...prev]);
@@ -102,26 +119,39 @@ export function CustomersClient({ customers: initial }: { customers: Customer[] 
                   <td className="px-4 py-3 text-ink-500">{c.lastRequestDate ? formatDate(c.lastRequestDate) : "—"}</td>
                   <td className="px-4 py-3 text-ink-600">{c.campaignName ?? "—"}</td>
                   <td className="px-4 py-3">
-                    <Badge tone={customerRequestStatusConfig[c.requestStatus].tone}>
-                      {customerRequestStatusConfig[c.requestStatus].label}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge tone={customerRequestStatusConfig[c.requestStatus].tone}>
+                        {customerRequestStatusConfig[c.requestStatus].label}
+                      </Badge>
+                      <span className="text-xs text-ink-400">
+                        {c.requestsSent}/{cap}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button
-                      size="sm"
-                      variant={c.requestStatus === "not_sent" ? "secondary" : "ghost"}
-                      disabled={c.requestStatus !== "not_sent" || !c.consent}
-                      onClick={() => sendRequest(c.id)}
-                      title={
-                        c.requestStatus !== "not_sent"
-                          ? "A request was already sent — we avoid asking twice."
+                    {(() => {
+                      const blocked = c.requestStatus === "completed" || c.requestStatus === "capped" || !c.consent;
+                      const label = c.requestsSent === 0 ? "Send request" : "Send follow-up";
+                      const title =
+                        c.requestStatus === "completed"
+                          ? "They've already left a review — no need to ask again."
+                          : c.requestStatus === "capped"
+                          ? `Reached the ${cap}-request limit for this customer.`
                           : !c.consent
                           ? "No consent on file for review requests"
-                          : undefined
-                      }
-                    >
-                      <Send size={12} /> {c.requestStatus === "not_sent" ? "Send request" : "Already asked"}
-                    </Button>
+                          : undefined;
+                      return (
+                        <Button
+                          size="sm"
+                          variant={blocked ? "ghost" : "secondary"}
+                          disabled={blocked}
+                          onClick={() => sendRequest(c.id)}
+                          title={title}
+                        >
+                          <Send size={12} /> {blocked ? customerRequestStatusConfig[c.requestStatus].label : label}
+                        </Button>
+                      );
+                    })()}
                   </td>
                 </tr>
               ))}
@@ -133,9 +163,10 @@ export function CustomersClient({ customers: initial }: { customers: Customer[] 
       <Card className="flex items-start gap-3 p-4">
         <ShieldCheck size={18} className="mt-0.5 shrink-0 text-evergreen-600" />
         <p className="text-sm text-ink-600">
-          We only send one review request per customer to respect their time — you can see this reflected in the
-          Status column above. Manage data retention, exports, and deletion in{" "}
-          <span className="font-medium text-ink-800">Settings → Privacy &amp; Security</span>.
+          To respect customers&apos; time, we never ask more than {cap} times per customer, and we stop immediately once
+          they leave a review. Change this limit in{" "}
+          <span className="font-medium text-ink-800">Settings → Business</span>. Manage data retention, exports, and
+          deletion in <span className="font-medium text-ink-800">Settings → Privacy &amp; Security</span>.
         </p>
       </Card>
 
