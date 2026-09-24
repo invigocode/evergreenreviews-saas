@@ -12,6 +12,7 @@ const variants = {
   danger: "bg-white text-error-600 border border-error-600/25 hover:bg-error-50",
   onDark: "bg-white text-evergreen-800 hover:bg-evergreen-50",
   ghostOnDark: "text-white hover:bg-white/10",
+  cta: "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm shadow-blue-900/10",
 };
 
 const sizes = {
