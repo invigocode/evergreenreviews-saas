@@ -15,15 +15,19 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <Sidebar email={email} />
         <MobileNav email={email} />
 
-        {session.isDemo && (
-          <div className="flex items-center justify-center gap-2 bg-gold-100 px-4 py-2 text-center text-xs font-medium text-gold-600">
-            <FlaskConical size={13} className="shrink-0" />
-            You&apos;re viewing the Oak & Stone Property Services demo account with sample data.
-            <Link href="/signup" className="underline underline-offset-2 hover:text-gold-500">
-              Create your own account
-            </Link>
-          </div>
-        )}
+        <div className="flex items-center justify-center gap-2 bg-gold-100 px-4 py-2 text-center text-xs font-medium text-gold-600">
+          <FlaskConical size={13} className="shrink-0" />
+          {session.isDemo ? (
+            <>
+              You&apos;re viewing the Oak & Stone Property Services demo account with sample data.
+              <Link href="/signup" className="underline underline-offset-2 hover:text-gold-500">
+                Create your own account
+              </Link>
+            </>
+          ) : (
+            "Your account is connected. We're showing sample data while live review and request syncing is still being built — your real data will appear here soon."
+          )}
+        </div>
 
         <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>
       </div>
