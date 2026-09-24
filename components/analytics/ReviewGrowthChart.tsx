@@ -9,8 +9,8 @@ export function ReviewGrowthChart({ data }: { data: ChartPoint[] }) {
       <AreaChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="reviewGrowthFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#1a4f34" stopOpacity={0.22} />
-            <stop offset="100%" stopColor="#1a4f34" stopOpacity={0.02} />
+            <stop offset="0%" stopColor="#147b28" stopOpacity={0.22} />
+            <stop offset="100%" stopColor="#147b28" stopOpacity={0.02} />
           </linearGradient>
         </defs>
         <CartesianGrid vertical={false} stroke="#e9e5d8" />
@@ -20,7 +20,7 @@ export function ReviewGrowthChart({ data }: { data: ChartPoint[] }) {
           contentStyle={{ borderRadius: 10, border: "1px solid #e9e5d8", fontSize: 13 }}
           labelStyle={{ fontWeight: 600, color: "#1c2320" }}
         />
-        <Area type="monotone" dataKey="totalReviews" name="Total reviews" stroke="#1a4f34" strokeWidth={2} fill="url(#reviewGrowthFill)" />
+        <Area type="monotone" dataKey="totalReviews" name="Total reviews" stroke="#147b28" strokeWidth={2} fill="url(#reviewGrowthFill)" />
       </AreaChart>
     </ResponsiveContainer>
   );

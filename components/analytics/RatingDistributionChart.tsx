@@ -4,7 +4,7 @@ import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 
 export function RatingDistributionChart({ distribution }: { distribution: Record<number, number> }) {
   const data = [5, 4, 3, 2, 1].map((star) => ({ star: `${star}★`, count: distribution[star] ?? 0, rating: star }));
-  const colors: Record<number, string> = { 5: "#1a4f34", 4: "#35835a", 3: "#b08a3e", 2: "#a35b13", 1: "#ab2a20" };
+  const colors: Record<number, string> = { 5: "#147b28", 4: "#18bb37", 3: "#b08a3e", 2: "#a35b13", 1: "#ab2a20" };
 
   return (
     <ResponsiveContainer width="100%" height={220}>

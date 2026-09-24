@@ -20,7 +20,7 @@ export function MobileNav({ email }: { email: string }) {
   return (
     <div className="sticky top-0 z-40 flex items-center justify-between border-b border-sand-200 bg-white px-4 py-3 lg:hidden">
       <Link href="/dashboard">
-        <Logo iconSize={24} />
+        <Logo size={16} />
       </Link>
       <button
         type="button"
@@ -37,7 +37,7 @@ export function MobileNav({ email }: { email: string }) {
           <div className="absolute inset-0 bg-ink-900/40 animate-fade-in" onClick={() => setOpen(false)} />
           <div className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] animate-rise flex-col bg-white p-3.5 shadow-popover">
             <div className="flex items-center justify-between px-2 py-2">
-              <Logo iconSize={24} />
+              <Logo size={16} />
               <button
                 type="button"
                 onClick={() => setOpen(false)}

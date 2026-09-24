@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { business } from "@/lib/demo-data";
 
 const cardTemplates = [
-  { id: "evergreen", label: "Evergreen", fit: "Service businesses", bg: "bg-evergreen-800", text: "text-white", sub: "text-evergreen-200", qrBg: "#ffffff", qrFg: "#1a4f34" },
+  { id: "evergreen", label: "Evergreen", fit: "Service businesses", bg: "bg-evergreen-800", text: "text-white", sub: "text-evergreen-200", qrBg: "#ffffff", qrFg: "#147b28" },
   { id: "sand", label: "Warm neutral", fit: "Cafés & retail", bg: "bg-sand-100", text: "text-ink-900", sub: "text-evergreen-700", qrBg: "#ffffff", qrFg: "#1c2320" },
   { id: "midnight", label: "Midnight gold", fit: "Salons & hotels", bg: "bg-ink-900", text: "text-white", sub: "text-gold-300", qrBg: "#ffffff", qrFg: "#1c2320" },
 ] as const;
