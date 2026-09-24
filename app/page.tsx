@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   Send,
   BarChart3,
@@ -9,11 +10,10 @@ import {
   ShieldCheck,
   Check,
   ChevronDown,
-  ArrowRight,
 } from "lucide-react";
 import { MarketingHeader } from "@/components/marketing/Header";
 import { MarketingFooter } from "@/components/marketing/Footer";
-import { DashboardPreview } from "@/components/marketing/DashboardPreview";
+import { ReviewAuditTool } from "@/components/marketing/ReviewAuditTool";
 import { ButtonLink } from "@/components/ui/Button";
 
 const businessTypes = [
@@ -94,23 +94,15 @@ export default function LandingPage() {
             Evergreen Reviews helps you build a simple, consistent review system that makes it easier for satisfied
             customers to share their experience.
           </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <ButtonLink href="/signup" size="lg">
-              Get started <ArrowRight size={16} />
-            </ButtonLink>
-            <ButtonLink
-              href="mailto:hello@evergreenreviews.com?subject=Review%20Growth%20Audit"
-              variant="secondary"
-              size="lg"
-            >
-              Book a review growth audit
-            </ButtonLink>
+          <div className="mt-10">
+            <ReviewAuditTool />
           </div>
-          <p className="mt-4 text-sm text-ink-400">No credit card required · Live demo available instantly</p>
-
-          <div className="mt-14">
-            <DashboardPreview />
-          </div>
+          <p className="mt-5 text-sm text-ink-400">
+            No credit card required · Prefer to skip ahead?{" "}
+            <Link href="/signup" className="font-medium text-evergreen-700 hover:underline">
+              Create your account
+            </Link>
+          </p>
         </section>
 
         {/* Problem */}
